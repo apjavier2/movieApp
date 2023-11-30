@@ -1,7 +1,12 @@
+import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:movie_app/pages/home/widgets/poster.dart';
-import 'package:movie_app/pages/movie_info/movie_info.dart';
 import 'package:movie_app/utils/mock/movie_mock.dart';
+import 'package:movie_app/widgets/movies_horizontal_view.dart';
+
+import '../../data/model/movie/movie.model.dart';
 
 class HomePage extends StatefulWidget {
   static const String routeName = '/home';
@@ -12,54 +17,78 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Map<String, dynamic>> moviesMock = MoviesMock.moviesMock;
-  List<Map<String, dynamic>> nowPlayingMoviesMock =
+  final List<Map<String, dynamic>> moviesMock = MoviesMock.moviesMock;
+  final List<Map<String, dynamic>> nowPlayingMoviesMock =
       MoviesMock.nowPlayingMoviesMock;
+  final List<Map<String, dynamic>> popularMoviesMock =
+      MoviesMock.popularMoviesMock;
+  final List<Map<String, dynamic>> topRatedMoviesMock =
+      MoviesMock.topRatedMoviesMock;
+  final List<Map<String, dynamic>> upcomingMoviesMock =
+      MoviesMock.upcomingMoviesMock;
   final String imageBaseUrl = 'http://image.tmdb.org/t/p/w500';
+  int currentIndex = 0;
+  double opacity = 1.0;
+  final Dio dio = Dio();
+  final String token = dotenv.env['API_TOKEN'] ?? '';
+  Future<List<Movie>> getMovieList() async {
+    try {
+      Response response = await dio.get(
+          'https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+
+      List<dynamic> movieData = response.data['results'];
+      List<Movie> movies =
+          movieData.map((data) => Movie.fromJson(data)).toList();
+
+      return movies;
+    } on DioException catch (err) {
+      throw err.message.toString();
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getMovieList();
+    Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+      setState(() {
+        opacity = 0.0;
+      });
+      Timer(const Duration(seconds: 2), () {
+        setState(() {
+          currentIndex = (currentIndex + 1) % moviesMock.length;
+          opacity = 1.0;
+        });
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Text('Movie'),
-            Poster(path: moviesMock[0]['poster_path']),
-            const Text('Now Playing'),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.3,
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  itemCount: nowPlayingMoviesMock.length,
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pushNamed(MovieInfoPage.routeName,
-                            arguments: MovieInfoArgs(
-                                movie: nowPlayingMoviesMock[index]));
-                      },
-                      child: Column(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.all(10),
-                            color: Colors.black,
-                            height: MediaQuery.of(context).size.height * 0.2,
-                            width: MediaQuery.of(context).size.width * 0.3,
-                            child: Image.network(
-                                '$imageBaseUrl${nowPlayingMoviesMock[index]['poster_path']}',
-                                fit: BoxFit.fill),
-                          ),
-                          SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.3,
-                              child: Text(nowPlayingMoviesMock[index]['title'],
-                                  textAlign: TextAlign.center)),
-                        ],
-                      ),
-                    );
-                  }),
-            )
-          ],
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Text('test'),
+              const Text('Movie'),
+              AnimatedOpacity(
+                opacity: opacity,
+                duration: const Duration(seconds: 2),
+                child: Poster(path: moviesMock[currentIndex]['poster_path']),
+              ),
+              MoviesHorizontalView(
+                  movies: nowPlayingMoviesMock, title: "Now Playing"),
+              MoviesHorizontalView(movies: popularMoviesMock, title: "Popular"),
+              MoviesHorizontalView(
+                  movies: topRatedMoviesMock, title: "Top Rated"),
+              MoviesHorizontalView(
+                  movies: upcomingMoviesMock, title: "Upcoming"),
+            ],
+          ),
         ),
       ),
     );
