@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MovieInfoArgs {
   MovieInfoArgs({required this.movie});
@@ -16,7 +17,7 @@ class MovieInfoPage extends StatefulWidget {
 }
 
 class _MovieInfoPageState extends State<MovieInfoPage> {
-  final String imageBaseUrl = 'http://image.tmdb.org/t/p/w500';
+  final String imageBaseUrl = dotenv.env['IMAGE_BASE_URL']!;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
