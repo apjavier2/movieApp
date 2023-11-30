@@ -1,9 +1,12 @@
 import 'dart:async';
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:movie_app/pages/home/widgets/poster.dart';
 import 'package:movie_app/utils/mock/movie_mock.dart';
 import 'package:movie_app/widgets/movies_horizontal_view.dart';
+
+import '../../data/model/movie/movie.model.dart';
 
 class HomePage extends StatefulWidget {
   static const String routeName = '/home';
@@ -26,10 +29,30 @@ class _HomePageState extends State<HomePage> {
   final String imageBaseUrl = 'http://image.tmdb.org/t/p/w500';
   int currentIndex = 0;
   double opacity = 1.0;
+  final Dio dio = Dio();
+  final String token = dotenv.env['API_TOKEN'] ?? '';
+  Future<List<Movie>> getMovieList() async {
+    try {
+      Response response = await dio.get(
+          'https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+
+      List<dynamic> movieData = response.data['results'];
+      List<Movie> movies =
+          movieData.map((data) => Movie.fromJson(data)).toList();
+
+      return movies;
+    } on DioException catch (err) {
+      throw err.message.toString();
+    } catch (e) {
+      throw e.toString();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    getMovieList();
     Timer.periodic(const Duration(seconds: 5), (Timer timer) {
       setState(() {
         opacity = 0.0;
@@ -50,6 +73,7 @@ class _HomePageState extends State<HomePage> {
         child: SafeArea(
           child: Column(
             children: [
+              Text('test'),
               const Text('Movie'),
               AnimatedOpacity(
                 opacity: opacity,
