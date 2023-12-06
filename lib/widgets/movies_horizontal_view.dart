@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:movie_app/data/model/movie/movie.model.dart';
 import 'package:movie_app/pages/movie_info/movie_info.dart';
 
 class MoviesHorizontalView extends StatelessWidget {
   const MoviesHorizontalView(
       {super.key, required this.movies, required this.title});
-  final List<Map<String, dynamic>> movies;
+  final List<Movie> movies;
   final String title;
   final String imageBaseUrl = 'http://image.tmdb.org/t/p/w500';
 
@@ -33,14 +34,14 @@ class MoviesHorizontalView extends StatelessWidget {
                     height: MediaQuery.of(context).size.height * 0.20,
                     width: MediaQuery.of(context).size.width * 0.3,
                     child: Image.network(
-                      "$imageBaseUrl${movies[index]['poster_path']}",
+                      "$imageBaseUrl${movies[index].posterPath}",
                       fit: BoxFit.fill,
                     ),
                   ),
                   SizedBox(
                       width: MediaQuery.of(context).size.width * 0.3,
                       child: Text(
-                        movies[index]['original_title'],
+                        movies[index].originalTitle,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.white),
                       ))

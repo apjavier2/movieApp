@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:movie_app/data/model/movie/movie.model.dart';
 
 class MovieInfoArgs {
   MovieInfoArgs({required this.movie});
-  final Map<String, dynamic> movie;
+  final Movie movie;
 }
 
 class MovieInfoPage extends StatefulWidget {
   static const String routeName = '/movieInfo';
 
   const MovieInfoPage({super.key, required this.movie});
-  final Map<String, dynamic> movie;
+  final Movie movie;
 
   @override
   State<MovieInfoPage> createState() => _MovieInfoPageState();
@@ -29,8 +30,7 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.3,
               width: MediaQuery.of(context).size.width,
-              child: Image.network(
-                  '$imageBaseUrl${widget.movie['poster_path']}',
+              child: Image.network('$imageBaseUrl${widget.movie.posterPath}',
                   fit: BoxFit.fill),
             ),
             Positioned(
@@ -42,16 +42,16 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
                     height: MediaQuery.of(context).size.height * 0.4,
                     width: MediaQuery.of(context).size.width * 0.6,
                     child: Image.network(
-                        '$imageBaseUrl${widget.movie['poster_path']}',
+                        '$imageBaseUrl${widget.movie.posterPath}',
                         fit: BoxFit.fill),
                   ),
-                  Text(widget.movie['title'],
-                      style: TextStyle(
+                  Text(widget.movie.title,
+                      style: const TextStyle(
                           color: Colors.red,
                           fontSize: 22,
                           fontWeight: FontWeight.bold)),
                   Text(
-                    widget.movie['overview'],
+                    widget.movie.overview,
                     textAlign: TextAlign.center,
                   ),
                 ]),
