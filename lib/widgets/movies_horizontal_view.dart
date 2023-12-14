@@ -34,14 +34,14 @@ class MoviesHorizontalView extends StatelessWidget {
                     height: MediaQuery.of(context).size.height * 0.20,
                     width: MediaQuery.of(context).size.width * 0.3,
                     child: Image.network(
-                      "$imageBaseUrl${movies[index].posterPath}",
+                      "$imageBaseUrl${movies[index].poster_path}",
                       fit: BoxFit.fill,
                     ),
                   ),
                   SizedBox(
                       width: MediaQuery.of(context).size.width * 0.3,
                       child: Text(
-                        movies[index].originalTitle,
+                        movies[index].original_title,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.white),
                       ))

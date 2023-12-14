@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -6,6 +7,7 @@ import 'package:movie_app/pages/home/widgets/genres_list.dart';
 import 'package:movie_app/pages/home/widgets/poster.dart';
 import 'package:movie_app/utils/mock/genres_mock.dart';
 import 'package:movie_app/utils/mock/movie_mock.dart';
+import 'package:movie_app/widgets/movies_grid_view.dart';
 import 'package:movie_app/widgets/movies_horizontal_view.dart';
 
 import '../../data/model/movie/movie.model.dart';
@@ -35,17 +37,35 @@ class _HomePageState extends State<HomePage> {
   double opacity = 1.0;
   final Dio dio = Dio();
   final String token = dotenv.env['API_TOKEN'] ?? '';
+  num? genreSelectedId;
 
-  Future<List<Movie>> getMovieList() async {
+  Future<List<Movie>> getMovieList(String listCategory) async {
     try {
       Response response = await dio.get(
-          'https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1',
+          'https://api.themoviedb.org/3/movie/$listCategory?language=en-US&page=1',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+
+      List<dynamic> movieData = response.data['results'];
+
+      List<Movie> movies =
+          movieData.map((data) => Movie.fromJson(data)).toList();
+      return movies;
+    } on DioException catch (err) {
+      throw err.message.toString();
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<List<Movie>> getMoviesByGenre(num genreId) async {
+    try {
+      Response response = await dio.get(
+          'https://api.themoviedb.org/3/discover/movie?language=en-US&page=1&with_genres=$genreId',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
       List<dynamic> movieData = response.data['results'];
       List<Movie> movies =
           movieData.map((data) => Movie.fromJson(data)).toList();
-
       return movies;
     } on DioException catch (err) {
       throw err.message.toString();
@@ -57,7 +77,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    getMovieList();
     Timer.periodic(const Duration(seconds: 5), (Timer timer) {
       setState(() {
         opacity = 0.0;
@@ -76,38 +95,78 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: SingleChildScrollView(
         child: SafeArea(
-          child: Column(
-            children: [
-              const Text('Movie'),
-              GenresList(
-                  genres: genresMock,
-                  onClick: (String genreSelected, int genreID) {
-                    print('Selected $genreSelected : $genreID');
-                  }),
-              AnimatedOpacity(
-                opacity: opacity,
-                duration: const Duration(seconds: 2),
-                child: Poster(path: moviesMock[currentIndex]['poster_path']),
-              ),
-
-              FutureBuilder(
-                  future: getMovieList(),
-                  builder: ((context, snapshot) {
-                    if (snapshot.hasData) {
-                      return MoviesHorizontalView(
-                          movies: snapshot.data!, title: "Now Playing");
-                    }
-                    return const CircularProgressIndicator();
-                  })),
-              // MoviesHorizontalView(
-              //     movies: nowPlayingMoviesMock, title: "Now Playing"),
-
-              // MoviesHorizontalView(movies: popularMoviesMock, title: "Popular"),
-              // MoviesHorizontalView(
-              //     movies: topRatedMoviesMock, title: "Top Rated"),
-              // MoviesHorizontalView(
-              //     movies: upcomingMoviesMock, title: "Upcoming"),
-            ],
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: Column(
+              children: [
+                const Text('Movie'),
+                GenresList(
+                    selectedId: genreSelectedId,
+                    genres: genresMock,
+                    onClick: (String genreSelected, int genreID) {
+                      setState(() {
+                        if (genreSelectedId == genreID) {
+                          genreSelectedId = null;
+                        } else {
+                          genreSelectedId = genreID;
+                        }
+                      });
+                    }),
+                if (genreSelectedId == null) ...[
+                  AnimatedOpacity(
+                    opacity: opacity,
+                    duration: const Duration(seconds: 2),
+                    child:
+                        Poster(path: moviesMock[currentIndex]['poster_path']),
+                  ),
+                  FutureBuilder(
+                      future: getMovieList('now_playing'),
+                      builder: ((context, snapshot) {
+                        if (snapshot.hasData) {
+                          return MoviesHorizontalView(
+                              movies: snapshot.data!, title: "Now Playing");
+                        }
+                        return const CircularProgressIndicator();
+                      })),
+                  FutureBuilder(
+                      future: getMovieList('popular'),
+                      builder: ((context, snapshot) {
+                        if (snapshot.hasData) {
+                          return MoviesHorizontalView(
+                              movies: snapshot.data!, title: "Popular");
+                        }
+                        return const CircularProgressIndicator();
+                      })),
+                  FutureBuilder(
+                      future: getMovieList('top_rated'),
+                      builder: ((context, snapshot) {
+                        if (snapshot.hasData) {
+                          return MoviesHorizontalView(
+                              movies: snapshot.data!, title: "Top Rated");
+                        }
+                        return const CircularProgressIndicator();
+                      })),
+                  FutureBuilder(
+                      future: getMovieList('upcoming'),
+                      builder: ((context, snapshot) {
+                        if (snapshot.hasData) {
+                          return MoviesHorizontalView(
+                              movies: snapshot.data!, title: "Upcoming");
+                        }
+                        return const CircularProgressIndicator();
+                      })),
+                ] else ...[
+                  FutureBuilder(
+                      future: getMoviesByGenre(genreSelectedId!),
+                      builder: ((context, snapshot) {
+                        if (snapshot.hasData) {
+                          return MoviesGridView(movies: snapshot.data!);
+                        }
+                        return const CircularProgressIndicator();
+                      })),
+                ]
+              ],
+            ),
           ),
         ),
       ),

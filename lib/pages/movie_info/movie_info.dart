@@ -30,7 +30,7 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.3,
               width: MediaQuery.of(context).size.width,
-              child: Image.network('$imageBaseUrl${widget.movie.posterPath}',
+              child: Image.network('$imageBaseUrl${widget.movie.poster_path}',
                   fit: BoxFit.fill),
             ),
             Positioned(
@@ -42,16 +42,16 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
                     height: MediaQuery.of(context).size.height * 0.4,
                     width: MediaQuery.of(context).size.width * 0.6,
                     child: Image.network(
-                        '$imageBaseUrl${widget.movie.posterPath}',
+                        '$imageBaseUrl${widget.movie.poster_path}',
                         fit: BoxFit.fill),
                   ),
-                  Text(widget.movie.title,
+                  Text(widget.movie.title ?? '',
                       style: const TextStyle(
                           color: Colors.red,
                           fontSize: 22,
                           fontWeight: FontWeight.bold)),
                   Text(
-                    widget.movie.overview,
+                    widget.movie.overview ?? '',
                     textAlign: TextAlign.center,
                   ),
                 ]),
